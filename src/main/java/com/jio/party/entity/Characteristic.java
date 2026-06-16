@@ -1,5 +1,6 @@
 package com.jio.party.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,12 +23,15 @@ public class Characteristic {
 
     private String valueType;
 
+    @JsonProperty("@baseType")
     @Column(name = "at_base_type")
     private String atBaseType;
 
+    @JsonProperty("@schemaLocation")
     @Column(name = "at_schema_location")
     private String atSchemaLocation;
 
+    @JsonProperty("@type")
     @Column(name = "at_type")
     private String atType;
 

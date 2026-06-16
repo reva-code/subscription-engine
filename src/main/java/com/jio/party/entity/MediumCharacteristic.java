@@ -1,5 +1,6 @@
 package com.jio.party.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
@@ -18,12 +19,15 @@ public class MediumCharacteristic {
     private String street1;
     private String street2;
 
+    @JsonProperty("@baseType")
     @Column(name = "mc_at_base_type")
     private String atBaseType;
 
+    @JsonProperty("@schemaLocation")
     @Column(name = "mc_at_schema_location")
     private String atSchemaLocation;
 
+    @JsonProperty("@type")
     @Column(name = "mc_at_type")
     private String atType;
 

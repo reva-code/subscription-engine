@@ -1,5 +1,7 @@
 package com.jio.party.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
@@ -7,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "agreement_ref")
 public class AgreementRef {
 
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "db_id")
@@ -19,15 +22,19 @@ public class AgreementRef {
     private String href;
     private String name;
 
+    @JsonProperty("@referredType")
     @Column(name = "at_referred_type")
     private String atReferredType;
 
+    @JsonProperty("@baseType")
     @Column(name = "at_base_type")
     private String atBaseType;
 
+    @JsonProperty("@schemaLocation")
     @Column(name = "at_schema_location")
     private String atSchemaLocation;
 
+    @JsonProperty("@type")
     @Column(name = "at_type")
     private String atType;
 

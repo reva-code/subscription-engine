@@ -24,12 +24,16 @@ public class ProductOrderService {
 
     private final ProductOrderRepository productOrderRepository;
     private final OrderStateValidator orderStateValidator;
+    private final CatalogValidationService catalogValidationService;
 
     public ProductOrderService(ProductOrderRepository productOrderRepository,
-                               OrderStateValidator orderStateValidator) {
-        this.productOrderRepository = productOrderRepository;
-        this.orderStateValidator = orderStateValidator;
-    }
+                           OrderStateValidator orderStateValidator,
+                           CatalogValidationService catalogValidationService) {
+
+    this.productOrderRepository = productOrderRepository;
+    this.orderStateValidator = orderStateValidator;
+    this.catalogValidationService = catalogValidationService;
+}
 
     // ── createProductOrder ────────────────────────────────────────────────────
     //
@@ -63,7 +67,14 @@ public class ProductOrderService {
         // productOrderCreate.getProductOrderItem() is the list from the JSON body.
         if (productOrderCreate.getProductOrderItem() != null) {
             for (ProductOrderItem itemDto : productOrderCreate.getProductOrderItem()) {
+                if (itemDto.getProduct() != null &&
+                    itemDto.getProduct().getProductOffering() != null) {
 
+                    catalogValidationService.validateOffering(
+                        itemDto.getProduct()
+                            .getProductOffering()
+                            .getId());
+                            }
                 ProductOrderItemEntity itemEntity = new ProductOrderItemEntity();
 
                 // The item ID comes from the caller — it is a sequence number

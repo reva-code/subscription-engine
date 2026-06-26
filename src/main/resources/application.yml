@@ -1,0 +1,134 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: product-inventory-service
+
+  # ── DataSource ─────────────────────────────────────────────
+  datasource:
+    url: jdbc:mariadb://localhost:3306/jio_product_inventory?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&rewriteBatchedStatements=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      pool-name: ProductInventoryHikariPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+
+  # ── JPA / Hibernate ─────────────────────────────────────────
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: false
+        jdbc:
+          batch_size: 50
+          fetch_size: 100
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+        cache:
+          use_second_level_cache: false
+
+  # ── Flyway ──────────────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    out-of-order: false
+
+  # ── Jackson ─────────────────────────────────────────────────
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      write-date-timestamps-as-nanoseconds: false
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: false
+      adjust-dates-to-context-time-zone: false
+    date-format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+# ── SpringDoc / Swagger ────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /tmf-api/productInventoryManagement/v4/api-docs
+    enabled: true
+  swagger-ui:
+    path: /tmf-api/productInventoryManagement/v4/swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+  info:
+    title: TMF637 Product Inventory Management API
+    version: "4.0.0"
+    description: >
+      Jio Subscription Engine — Product Inventory Management Service.
+      Compliant with TM Forum TMF637 v4.0.0.
+
+# ── Actuator ──────────────────────────────────────────────────
+management:
+  server:
+    port: 8094
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,flyway,loggers,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: product-inventory-service
+
+# ── Application-specific ──────────────────────────────────────
+app:
+  base-path: /tmf-api/productInventoryManagement/v4
+  service-urls:
+    product-catalog:    http://localhost:8081/tmf-api/productCatalogManagement/v4
+    product-order:      http://localhost:8080/tmf-api/productOrderingManagement/v4
+    party-management:   http://localhost:8082/tmf-api/partyManagement/v4
+    customer-management: http://localhost:8083/tmf-api/customerManagement/v4
+    process-flow:       http://localhost:8089/tmf-api/processFlow/v4
+  events:
+    enabled: true
+    async: true
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.jio.productinventory: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+  file:
+    name: logs/product-inventory-service.log

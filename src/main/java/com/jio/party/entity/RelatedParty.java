@@ -9,14 +9,12 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "related_party")
 public class RelatedParty {
 
-    // Internal JPA PK — separate from TMF id which is an external party reference
     @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "db_id")
     private String dbId;
 
-    // TMF id: the ID of the party in its own service (e.g. customer id from customer-management-service)
     @NotBlank
     private String id;
 
@@ -24,7 +22,6 @@ public class RelatedParty {
     private String name;
     private String role;
 
-    // @referredType: disambiguates the party type, e.g. "Individual", "Organization"
     @NotBlank
     @JsonProperty("@referredType")
     @Column(name = "at_referred_type")

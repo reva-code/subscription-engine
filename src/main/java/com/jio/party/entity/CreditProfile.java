@@ -19,7 +19,6 @@ public class CreditProfile {
     private Integer creditRiskRating;
     private Integer creditScore;
 
-    // validFor is required on CreditProfile per TMF diagram [1]
     @NotNull
     @Embedded
     @AttributeOverrides({

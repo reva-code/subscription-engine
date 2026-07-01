@@ -15,7 +15,6 @@ public class AccountRef {
     @Column(name = "db_id")
     private String dbId;
 
-    // TMF id: reference to the account in its own service — required per spec
     @NotBlank
     private String id;
 

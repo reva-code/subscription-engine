@@ -3,6 +3,8 @@ package com.jio.party.entity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 
 @Embeddable
 public class MediumCharacteristic {
@@ -10,8 +12,13 @@ public class MediumCharacteristic {
     private String city;
     private String contactType;
     private String country;
+    @Email(message = "emailAddress must be a valid RFC 5322 email address")
     private String emailAddress;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "faxNumber must be a valid E.164 phone number")
     private String faxNumber;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "phoneNumber must be a valid E.164 phone number")
     private String phoneNumber;
     private String postCode;
     private String socialNetworkId;

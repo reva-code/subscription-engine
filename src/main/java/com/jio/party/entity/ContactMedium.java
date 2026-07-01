@@ -2,6 +2,7 @@ package com.jio.party.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
@@ -24,7 +25,7 @@ public class ContactMedium {
     })
     private TimePeriod validFor;
 
-    // Cardinality is exactly 1 per TMF diagram — always required
+    @Valid
     @Embedded
     private MediumCharacteristic characteristic;
 

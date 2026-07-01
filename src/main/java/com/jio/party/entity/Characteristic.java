@@ -16,7 +16,6 @@ public class Characteristic {
     @NotBlank
     private String name;
 
-    // TMF spec: value type is Any [1] — stored as String; complex values can be serialized as JSON
     @NotNull
     @Column(columnDefinition = "TEXT")
     private String value;

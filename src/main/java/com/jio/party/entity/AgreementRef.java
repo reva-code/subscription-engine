@@ -15,7 +15,6 @@ public class AgreementRef {
     @Column(name = "db_id")
     private String dbId;
 
-    // TMF id: reference to the agreement in its own service — required per spec
     @NotBlank
     private String id;
 

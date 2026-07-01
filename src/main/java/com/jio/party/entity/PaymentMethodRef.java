@@ -15,7 +15,6 @@ public class PaymentMethodRef {
     @Column(name = "db_id")
     private String dbId;
 
-    // TMF id: reference to the payment method in payment-method-service (port 8087)
     @NotBlank
     private String id;
 

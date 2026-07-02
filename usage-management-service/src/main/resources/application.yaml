@@ -1,0 +1,48 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: usage-management-service
+  datasource:
+    url: jdbc:mariadb://localhost:3306/jio_usage?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:amanraghav}
+    password: ${DB_PASSWORD:password123}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jackson:
+    time-zone: UTC
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        jdbc:
+          time_zone: UTC
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+
+jwt:
+  secret: change-me-in-prod-must-be-at-least-32-chars!!
+  expiry-seconds: 86400
+
+springdoc:
+  packages-to-scan: com.ott.subscription_engine.tmf635_usage
+  swagger-ui:
+    urls:
+      - name: "TMF 632 Party"
+        url: "http://localhost:8081/v3/api-docs"
+      - name: "TMF 620 Catalog"
+        url: "http://localhost:8082/v3/api-docs"
+      - name: "TMF 622 Ordering"
+        url: "http://localhost:8083/v3/api-docs"
+      - name: "TMF 666 Billing"
+        url: "http://localhost:8084/v3/api-docs"
+      - name: "TMF 637 Inventory"
+        url: "http://localhost:8085/v3/api-docs"
+      - name: "TMF 635 Usage"
+        url: "http://localhost:8086/v3/api-docs"

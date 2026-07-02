@@ -1,0 +1,27 @@
+server:
+  port: 8091
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: product-usage-service
+  profiles:
+    active: h2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+
+jio:
+  integration:
+    tmf637:
+      base-url: http://localhost:8084/tmf-api/productInventoryManagement/v4
+    tmf620:
+      base-url: http://localhost:8081/tmf-api/productCatalogManagement/v4

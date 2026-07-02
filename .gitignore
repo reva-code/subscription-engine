@@ -1,24 +1,52 @@
-# Maven build outputs
+# ===========================
+# Maven
+# ===========================
 target/
+*.class
 *.jar
 *.war
 *.ear
-*.class
 
-# Eclipse IDE
+# ===========================
+# IDEs
+# ===========================
+.idea/
+.vscode/
+.settings/
 .classpath
 .project
-.settings/
-
-# IntelliJ IDEA
-.idea/
 *.iml
-*.iws
 *.ipr
+*.iws
 
-# VS Code IDE
-.vscode/
+# ===========================
+# Environment
+# ===========================
+.env
+.env.*
 
-# Operating System Metadata
+# ===========================
+# Logs
+# ===========================
+*.log
+logs/
+run.log
+
+# ===========================
+# Build Output
+# ===========================
+out/
+bin/
+
+# ===========================
+# Operating System
+# ===========================
 .DS_Store
 Thumbs.db
+
+# ===========================
+# Temporary Files
+# ===========================
+*.tmp
+*.temp
+*.swp

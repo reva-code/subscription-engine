@@ -1,0 +1,82 @@
+package com.jio.party.entity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
+
+@Embeddable
+public class MediumCharacteristic {
+
+    private String city;
+    private String contactType;
+    private String country;
+    @Email(message = "emailAddress must be a valid RFC 5322 email address")
+    private String emailAddress;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "faxNumber must be a valid E.164 phone number")
+    private String faxNumber;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "phoneNumber must be a valid E.164 phone number")
+    private String phoneNumber;
+    private String postCode;
+    private String socialNetworkId;
+    private String stateOrProvince;
+    private String street1;
+    private String street2;
+
+    @JsonProperty("@baseType")
+    @Column(name = "mc_at_base_type")
+    private String atBaseType;
+
+    @JsonProperty("@schemaLocation")
+    @Column(name = "mc_at_schema_location")
+    private String atSchemaLocation;
+
+    @JsonProperty("@type")
+    @Column(name = "mc_at_type")
+    private String atType;
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getContactType() { return contactType; }
+    public void setContactType(String contactType) { this.contactType = contactType; }
+
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+
+    public String getEmailAddress() { return emailAddress; }
+    public void setEmailAddress(String emailAddress) { this.emailAddress = emailAddress; }
+
+    public String getFaxNumber() { return faxNumber; }
+    public void setFaxNumber(String faxNumber) { this.faxNumber = faxNumber; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getPostCode() { return postCode; }
+    public void setPostCode(String postCode) { this.postCode = postCode; }
+
+    public String getSocialNetworkId() { return socialNetworkId; }
+    public void setSocialNetworkId(String socialNetworkId) { this.socialNetworkId = socialNetworkId; }
+
+    public String getStateOrProvince() { return stateOrProvince; }
+    public void setStateOrProvince(String stateOrProvince) { this.stateOrProvince = stateOrProvince; }
+
+    public String getStreet1() { return street1; }
+    public void setStreet1(String street1) { this.street1 = street1; }
+
+    public String getStreet2() { return street2; }
+    public void setStreet2(String street2) { this.street2 = street2; }
+
+    public String getAtBaseType() { return atBaseType; }
+    public void setAtBaseType(String atBaseType) { this.atBaseType = atBaseType; }
+
+    public String getAtSchemaLocation() { return atSchemaLocation; }
+    public void setAtSchemaLocation(String atSchemaLocation) { this.atSchemaLocation = atSchemaLocation; }
+
+    public String getAtType() { return atType; }
+    public void setAtType(String atType) { this.atType = atType; }
+}

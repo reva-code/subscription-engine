@@ -1,0 +1,34 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=VALUE,TYPE,NAME
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jackson:
+    time-zone: UTC
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  flyway:
+    enabled: false
+  mail:
+    host: localhost
+    port: 25
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+jwt:
+  secret: test-secret-key-must-be-32-chars-min!
+  expiry-seconds: 3600
+
+razorpay:
+  key-id: rzp_test_dummy
+  key-secret: dummy_secret

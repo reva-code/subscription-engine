@@ -1,0 +1,75 @@
+server:
+  port: 8089
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: process-flow-service
+  datasource:
+    url: jdbc:mariadb://localhost:3306/jio_process_flow?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:amanraghav}
+    password: ${DB_PASSWORD:password123}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: UTC
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+
+jwt:
+  secret: change-me-in-prod-must-be-at-least-32-chars!!
+  expiry-seconds: 86400
+
+litellm:
+  enabled: ${LITELLM_ENABLED:false}
+  base-url: ${LITELLM_BASE_URL:http://localhost:4000}
+  api-key: ${LITELLM_API_KEY:sk-se-master-key}
+  model: ${LITELLM_MODEL:groq/llama-3.1-8b-instant}
+
+springdoc:
+  packages-to-scan: com.ott.subscription_engine.tmf701_process_flow
+  swagger-ui:
+    urls:
+      - name: "TMF 632 Party"
+        url: "http://localhost:8081/v3/api-docs"
+      - name: "TMF 620 Catalog"
+        url: "http://localhost:8082/v3/api-docs"
+      - name: "TMF 622 Ordering"
+        url: "http://localhost:8083/v3/api-docs"
+      - name: "TMF 666 Billing"
+        url: "http://localhost:8084/v3/api-docs"
+      - name: "TMF 637 Inventory"
+        url: "http://localhost:8085/v3/api-docs"
+      - name: "TMF 635 Usage"
+        url: "http://localhost:8086/v3/api-docs"
+      - name: "TMF 937 Product Usage"
+        url: "http://localhost:8087/v3/api-docs"
+      - name: "TMF 701 Process Flow"
+        url: "http://localhost:8088/v3/api-docs"
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_placeholder}
+  key-secret: ${RAZORPAY_KEY_SECRET:placeholder_secret}

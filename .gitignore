@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-# Maven build outputs
-target/
-*.jar
-*.war
-*.ear
-*.class
-
-# Eclipse IDE
-.classpath
-.project
-.settings/
-
-# IntelliJ IDEA
-.idea/
-*.iml
-*.iws
-*.ipr
-
-# VS Code IDE
-.vscode/
-
-# Operating System Metadata
-.DS_Store
-Thumbs.db
-=======
 # Maven
 target/
 *.class
@@ -46,4 +20,3 @@ Thumbs.db
 
 # Docker
 .dockerignore
->>>>>>> origin/Atlas-Saanvi

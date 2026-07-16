@@ -41,9 +41,9 @@
 
         <!-- ── Team Apex — Payments & Comms ── -->
         <module>payment-management-service</module>
-        <module>payment-method-service</module>
+        <!-- <module>payment-method-service</module> -->
         <module>communication-service</module>
-        <module>payment-gateway-adapter</module>
+        <!-- <module>payment-gateway-adapter</module> -->
     </modules>
 
     <dependencyManagement>

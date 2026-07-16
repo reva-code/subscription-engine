@@ -12,11 +12,11 @@
         <springdoc.version>2.6.0</springdoc.version>
         <swagger-ui.version>5.17.14</swagger-ui.version>
     </properties>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.13</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <parent>
+        <groupId>com.jio</groupId>
+        <artifactId>subscription-engine</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <build>

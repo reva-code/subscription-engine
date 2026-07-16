@@ -37,7 +37,7 @@
         <module>usage-management-service</module>
         <module>product-usage-service</module>
         <module>product-inventory-service</module>
-        <module>process-flow-service</module>
+        <!-- <module>process-flow-service</module> -->
 
         <!-- ── Team Apex — Payments & Comms ── -->
         <module>payment-management-service</module>

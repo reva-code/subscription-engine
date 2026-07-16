@@ -13,9 +13,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.ott</groupId>
-            <artifactId>tmf-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>com.jio</groupId>
+            <artifactId>common-lib</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

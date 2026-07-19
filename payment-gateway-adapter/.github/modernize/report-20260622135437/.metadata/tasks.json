@@ -1,0 +1,128 @@
+{
+  "tasks": [
+    {
+      "id": "001-migrate-plaintext-credentials-to-azure-keyvault",
+      "type": "transform",
+      "description": "Migrate from plaintext credentials to Azure Key Vault",
+      "requirements": "Replace plaintext credentials in configuration files with Azure Key Vault secrets and update the Spring Boot application to retrieve secrets securely.",
+      "environmentConfiguration": null,
+      "kbId": "plaintext-credential-to-azure-keyvault",
+      "skills": [
+        { "name": "plaintext-credential-to-azure-keyvault", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+ "removePlaintextSecrets": "true"
+      }
+    },
+    {
+      "id": "002-containerize-java-application",
+      "type": "containerization",
+      "description": "Containerize Java Application for Container Readiness",
+      "requirements": "Add a Dockerfile and container build process so the Spring Boot application can run inside a container for Azure deployment.",
+      "environmentConfiguration": null,
+      "kbId": "containerization-copilot-agent",
+      "skills": [
+        { "name": "containerization-copilot-agent", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "buildContainerImage": "true",
+        "runContainerSmokeTest": "true"
+      }
+    },
+    {
+      "id": "003-remove-hardcoded-credentials",
+      "type": "security",
+      "description": "Remove hardcoded credentials",
+      "requirements": "Eliminate default or hardcoded credentials from source code and configuration, replacing them with secure secret management or configuration values.",
+      "environmentConfiguration": null,
+      "skills": [
+        { "name": "remove-hardcoded-credentials", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "noHardcodedCredentials": "true"
+      }
+    },
+    {
+      "id": "004-check-hardcoded-urls",
+      "type": "transform",
+      "description": "Check hardcoded URLs",
+      "requirements": "Review and replace hardcoded HTTP/HTTPS URLs in source code with configurable or environment-based endpoint settings.",
+      "environmentConfiguration": null,
+      "skills": [
+        { "name": "check-hardcoded-urls", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "noHardcodedUrls": "true"
+      }
+    },
+    {
+      "id": "005-migrate-jakarta-jpa-to-azure",
+      "type": "transform",
+      "description": "Migrate Jakarta JPA to Azure",
+      "requirements": "Update Jakarta Persistence / JPA dependencies and configuration for Azure database compatibility and cloud deployment.",
+      "environmentConfiguration": null,
+      "skills": [
+        { "name": "migrate-jakarta-jpa-to-azure", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "jpaAzureReady": "true"
+      }
+    },
+    {
+      "id": "006-upgrade-java-version",
+      "type": "upgrade",
+      "description": "Upgrade Java Version",
+      "requirements": "Upgrade the project from Java 17 to the latest supported LTS version and validate build/test compatibility.",
+      "environmentConfiguration": null,
+      "kbId": "java-version-upgrade",
+      "skills": [
+        { "name": "java-version-upgrade", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "id": "007-upgrade-spring-boot-version",
+      "type": "upgrade",
+      "description": "Upgrade Spring Boot Version",
+      "requirements": "Move the Spring Boot dependency to a supported release with ongoing OSS support and resolve compatibility issues.",
+      "environmentConfiguration": null,
+      "kbId": "spring-boot-upgrade",
+      "skills": [
+        { "name": "spring-boot-upgrade", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "id": "008-upgrade-spring-framework-version",
+      "type": "upgrade",
+      "description": "Upgrade Spring Framework Version",
+      "requirements": "Update Spring Framework dependencies to a supported version and verify the application remains stable.",
+      "environmentConfiguration": null,
+      "kbId": "spring-framework-upgrade",
+      "skills": [
+        { "name": "spring-framework-upgrade", "location": "builtin" }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    }
+  ],
+  "metadata": {
+    "language": "java",
+    "planName": "report-20260622135437-migration-plan",
+    "projectName": "payment-gateway-adapter",
+    "createdAt": "2026-06-22T12:00:00Z",
+    "version": "1.0"
+  }
+}

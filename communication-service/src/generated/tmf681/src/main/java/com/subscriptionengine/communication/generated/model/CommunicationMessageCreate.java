@@ -32,7 +32,7 @@ import jakarta.annotation.Generated;
 
 @Schema(name = "CommunicationMessage_Create", description = "Communication message means a notification approach in the format of a message which can be dispatched (sent) to the certain user by the system with the content which can be felt and understood by the recipient. The user can be either a final customer or a customer service agent. The message can reach the customer in different interaction channels, including: email, short message, mobile app notification (push). Skipped properties: id,href")
 @JsonTypeName("CommunicationMessage_Create")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-06-23T12:34:55.246677900+05:30[Asia/Calcutta]", comments = "Generator version: 7.7.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-07-20T15:01:51.572067+05:30[Asia/Calcutta]", comments = "Generator version: 7.7.0")
 public class CommunicationMessageCreate {
 
   private String content;

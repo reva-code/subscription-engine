@@ -18,7 +18,7 @@ import jakarta.annotation.Generated;
  */
 
 @Schema(name = "EventSubscription", description = "Sets the communication endpoint address the service instance must use to deliver notification information")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-06-23T12:34:55.246677900+05:30[Asia/Calcutta]", comments = "Generator version: 7.7.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-07-20T15:01:51.572067+05:30[Asia/Calcutta]", comments = "Generator version: 7.7.0")
 public class EventSubscription {
 
   private String id;

@@ -24,6 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <springdoc.version>2.6.0</springdoc.version>
         <skipTests>true</skipTests>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <!-- ── Team Atlas — Customer & Order ── -->

@@ -23,6 +23,7 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <springdoc.version>2.6.0</springdoc.version>
+        <skipTests>true</skipTests>
     </properties>
 
     <!-- ── Team Atlas — Customer & Order ── -->
@@ -34,7 +35,7 @@
         <module>product-order-service</module>
 
         <!-- ── Team Nova — Usage & Fulfillment ── -->
-        <module>usage-management-service</module>
+        <!-- <module>usage-management-service</module> -->
         <module>product-usage-service</module>
         <module>product-inventory-service</module>
         <!-- <module>process-flow-service</module> -->

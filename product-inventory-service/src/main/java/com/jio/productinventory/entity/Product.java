@@ -9,6 +9,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,12 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private ProductStatusType status;
+
+    @Column(name = "pause_reason", length = 255)
+    private String pauseReason;
+
+    @Column(name = "resume_date")
+    private LocalDate resumeDate;
 
     // ── Inline ProductOfferingRef ───────────────────────────────
     @Column(name = "product_offering_id", length = 36)

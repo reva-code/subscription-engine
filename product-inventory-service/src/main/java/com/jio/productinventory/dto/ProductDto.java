@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -49,6 +50,12 @@ public class ProductDto {
 
     @JsonProperty("status")
     private String status;
+
+    @JsonProperty("pauseReason")
+    private String pauseReason;
+
+    @JsonProperty("resumeDate")
+    private LocalDate resumeDate;
 
     @JsonProperty("billingAccount")
     private BillingAccountRefDto billingAccount;

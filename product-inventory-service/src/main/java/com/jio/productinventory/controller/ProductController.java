@@ -129,6 +129,25 @@ public class ProductController {
         return ResponseEntity.ok(productService.patchProduct(id, dto));
     }
 
+    // ── POST /product/{id}/pause ──────────────────────────────
+
+    @PostMapping("/product/{id}/pause")
+    @Operation(summary = "Pauses a Product",
+               description = "Suspends a Product with an automatic resume date. " +
+                             "resumeDate must be between 1 and 90 days from today.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Paused"),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "404", description = "Not Found"),
+        @ApiResponse(responseCode = "422", description = "Invalid status transition")
+    })
+    public ResponseEntity<ProductDto> pauseProduct(
+            @PathVariable String id,
+            @Valid @RequestBody PauseProductRequestDto dto) {
+
+        return ResponseEntity.ok(productService.pauseProduct(id, dto));
+    }
+
     // ── DELETE /product/{id} ─────────────────────────────────
 
     @DeleteMapping("/product/{id}")

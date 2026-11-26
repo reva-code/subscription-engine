@@ -13,6 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.jio.productinventory.repository.ProductStatusHistoryRepository;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -23,6 +27,7 @@ import static org.mockito.Mockito.*;
 class ProductServiceTest {
 
     @Mock private ProductRepository productRepository;
+    @Mock private ProductStatusHistoryRepository productStatusHistoryRepository;
     @Mock private ProductMapper mapper;
     @Mock private ProductEventPublisher eventPublisher;
     @Mock private HrefBuilder hrefBuilder;
@@ -100,5 +105,82 @@ class ProductServiceTest {
 
         assertThatThrownBy(() -> service.deleteProduct("missing"))
                 .isInstanceOf(ProductNotFoundException.class);
+    }
+
+    // ── getStatusHistory ───────────────────────────────────────
+
+    @Test
+    void getStatusHistory_validAuth_returnsOrderedHistory() {
+        Product product = Product.builder()
+                .relatedParty(List.of(RelatedParty.builder()
+                        .partyId("cust-001")
+                        .role("Customer")
+                        .build()))
+                .build();
+        product.setId("id-1");
+
+        OffsetDateTime t1 = OffsetDateTime.parse("2024-01-01T00:00:00Z");
+        OffsetDateTime t2 = OffsetDateTime.parse("2024-02-01T00:00:00Z");
+        ProductStatusHistory h1 = ProductStatusHistory.builder()
+                .fromStatus(null).toStatus("created").reason("Product created").changedAt(t1).build();
+        ProductStatusHistory h2 = ProductStatusHistory.builder()
+                .fromStatus("created").toStatus("active").reason("Activated").changedAt(t2).build();
+
+        when(productRepository.findByIdWithCollections("id-1")).thenReturn(Optional.of(product));
+        when(productStatusHistoryRepository.findByProductIdOrderByChangedAtAsc("id-1"))
+                .thenReturn(List.of(h1, h2));
+
+        List<ProductStatusHistoryDto> result = service.getStatusHistory("id-1", "cust-001");
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getToStatus()).isEqualTo("created");
+        assertThat(result.get(0).getChangedAt()).isEqualTo(t1);
+        assertThat(result.get(1).getFromStatus()).isEqualTo("created");
+        assertThat(result.get(1).getToStatus()).isEqualTo("active");
+        assertThat(result.get(1).getChangedAt()).isEqualTo(t2);
+    }
+
+    @Test
+    void getStatusHistory_accessDenied_throwsProductNotFoundException() {
+        Product product = Product.builder()
+                .relatedParty(List.of(RelatedParty.builder()
+                        .partyId("cust-A")
+                        .role("Customer")
+                        .build()))
+                .build();
+        product.setId("id-1");
+
+        when(productRepository.findByIdWithCollections("id-1")).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> service.getStatusHistory("id-1", "cust-B"))
+                .isInstanceOf(ProductNotFoundException.class);
+    }
+
+    @Test
+    void getStatusHistory_notFound_throwsProductNotFoundException() {
+        when(productRepository.findByIdWithCollections("missing-id")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getStatusHistory("missing-id", "cust-001"))
+                .isInstanceOf(ProductNotFoundException.class)
+                .hasMessageContaining("missing-id");
+    }
+
+    @Test
+    void getStatusHistory_emptyHistory_returnsEmptyList() {
+        Product product = Product.builder()
+                .relatedParty(List.of(RelatedParty.builder()
+                        .partyId("cust-001")
+                        .role("Customer")
+                        .build()))
+                .build();
+        product.setId("id-1");
+
+        when(productRepository.findByIdWithCollections("id-1")).thenReturn(Optional.of(product));
+        when(productStatusHistoryRepository.findByProductIdOrderByChangedAtAsc("id-1"))
+                .thenReturn(List.of());
+
+        List<ProductStatusHistoryDto> result = service.getStatusHistory("id-1", "cust-001");
+
+        assertThat(result).isEmpty();
     }
 }

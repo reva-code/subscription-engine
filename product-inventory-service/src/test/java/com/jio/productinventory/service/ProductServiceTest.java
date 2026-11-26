@@ -1,5 +1,6 @@
 package com.jio.productinventory.service;
 
+import com.jio.productinventory.client.CommunicationClient;
 import com.jio.productinventory.dto.*;
 import com.jio.productinventory.entity.*;
 import com.jio.productinventory.events.ProductEventPublisher;
@@ -10,9 +11,17 @@ import com.jio.productinventory.repository.ProductRepository;
 import com.jio.productinventory.util.HrefBuilder;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import com.jio.productinventory.repository.ProductStatusHistoryRepository;
 
 import java.time.OffsetDateTime;
@@ -31,9 +40,16 @@ class ProductServiceTest {
     @Mock private ProductMapper mapper;
     @Mock private ProductEventPublisher eventPublisher;
     @Mock private HrefBuilder hrefBuilder;
+    @Mock private CommunicationClient communicationClient;
 
     @InjectMocks
     private ProductService service;
+
+    @BeforeEach
+    void setPauseWindow() {
+        ReflectionTestUtils.setField(service, "pauseMinDays", 1);
+        ReflectionTestUtils.setField(service, "pauseMaxDays", 90);
+    }
 
     @Test
     void createProduct_happyPath_returnsDto() {
@@ -105,6 +121,221 @@ class ProductServiceTest {
 
         assertThatThrownBy(() -> service.deleteProduct("missing"))
                 .isInstanceOf(ProductNotFoundException.class);
+    }
+
+    // ── PAUSE ────────────────────────────────────────────────
+
+    private Product buildActiveProduct() {
+        Product entity = Product.builder()
+                .status(ProductStatusType.active)
+                .name("Jio 5G Unlimited")
+                .build();
+        entity.setId("prod-1");
+        RelatedParty customer = RelatedParty.builder()
+                .partyId("cust-1")
+                .role("Customer")
+                .build();
+        customer.setProduct(entity);
+        entity.getRelatedParty().add(customer);
+        return entity;
+    }
+
+    @Test
+    void pauseProduct_fromActive_setsSuspendedAndPersistsResumeDateAndReason() {
+        Product entity = buildActiveProduct();
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now().plusDays(30))
+                .reason("customer travel")
+                .build();
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        ProductDto expected = ProductDto.builder().id("prod-1").status("suspended").build();
+        when(mapper.toDto(any(Product.class))).thenReturn(expected);
+
+        ProductDto result = service.pauseProduct("prod-1", request);
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        Product saved = captor.getValue();
+
+        assertThat(saved.getStatus()).isEqualTo(ProductStatusType.suspended);
+        assertThat(saved.getResumeDate()).isEqualTo(request.getResumeDate());
+        assertThat(saved.getPauseReason()).isEqualTo("customer travel");
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void pauseProduct_createsStatusHistoryEntryWithReasonAndResumeDate() {
+        Product entity = buildActiveProduct();
+        LocalDate resumeDate = LocalDate.now().plusDays(15);
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(resumeDate)
+                .reason("customer travel")
+                .build();
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toDto(any(Product.class))).thenReturn(ProductDto.builder().id("prod-1").build());
+
+        service.pauseProduct("prod-1", request);
+
+        assertThat(entity.getStatusHistory()).hasSize(1);
+        ProductStatusHistory history = entity.getStatusHistory().get(0);
+        assertThat(history.getFromStatus()).isEqualTo("active");
+        assertThat(history.getToStatus()).isEqualTo("suspended");
+        assertThat(history.getReason()).isEqualTo("customer travel");
+        assertThat(history.getResumeDate()).isEqualTo(resumeDate);
+    }
+
+    @Test
+    void pauseProduct_publishesStateChangeEvent() {
+        Product entity = buildActiveProduct();
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now().plusDays(10))
+                .reason("travel")
+                .build();
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        ProductDto expected = ProductDto.builder().id("prod-1").status("suspended").build();
+        when(mapper.toDto(any(Product.class))).thenReturn(expected);
+
+        service.pauseProduct("prod-1", request);
+
+        verify(eventPublisher).publishStateChange(expected);
+    }
+
+    @Test
+    void pauseProduct_sendsPauseSmsViaCommunicationService() {
+        Product entity = buildActiveProduct();
+        LocalDate resumeDate = LocalDate.now().plusDays(10);
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(resumeDate)
+                .reason("travel")
+                .build();
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toDto(any(Product.class))).thenReturn(ProductDto.builder().id("prod-1").build());
+
+        service.pauseProduct("prod-1", request);
+
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(communicationClient).sendSms(eq("cust-1"), any(), any(), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).contains(resumeDate.toString());
+    }
+
+    @Test
+    void pauseProduct_alreadySuspended_throwsInvalidTransitionWithNoSideEffects() {
+        Product entity = Product.builder().status(ProductStatusType.suspended).build();
+        entity.setId("prod-1");
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now().plusDays(10))
+                .build();
+
+        assertThatThrownBy(() -> service.pauseProduct("prod-1", request))
+                .isInstanceOf(InvalidStatusTransitionException.class);
+
+        verify(productRepository, never()).save(any());
+        verify(eventPublisher, never()).publishStateChange(any());
+        verify(communicationClient, never()).sendSms(any(), any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProductStatusType.class,
+            names = {"cancelled", "terminated", "pendingActive", "pendingTerminate"})
+    void pauseProduct_disallowedSourceStatuses_rejected(ProductStatusType status) {
+        Product entity = Product.builder().status(status).build();
+        entity.setId("prod-1");
+
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now().plusDays(10))
+                .build();
+
+        assertThatThrownBy(() -> service.pauseProduct("prod-1", request))
+                .isInstanceOf(InvalidStatusTransitionException.class);
+    }
+
+    @Test
+    void pauseProduct_resumeDateToday_rejected() {
+        Product entity = buildActiveProduct();
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now())
+                .build();
+
+        assertThatThrownBy(() -> service.pauseProduct("prod-1", request))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(entity.getStatus()).isEqualTo(ProductStatusType.active);
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void pauseProduct_resumeDateBeyond90Days_rejected() {
+        Product entity = buildActiveProduct();
+        when(productRepository.findByIdWithCollections("prod-1")).thenReturn(Optional.of(entity));
+
+        PauseProductRequestDto request = PauseProductRequestDto.builder()
+                .resumeDate(LocalDate.now().plusDays(91))
+                .build();
+
+        assertThatThrownBy(() -> service.pauseProduct("prod-1", request))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(entity.getStatus()).isEqualTo(ProductStatusType.active);
+        verify(productRepository, never()).save(any());
+    }
+
+    // ── AUTO-RESUME ──────────────────────────────────────────
+
+    @Test
+    void autoResumeExpiredPauses_resumesDueProducts() {
+        Product due = Product.builder()
+                .status(ProductStatusType.suspended)
+                .resumeDate(LocalDate.now().minusDays(1))
+                .build();
+        due.setId("prod-due");
+
+        Page<Product> page = new PageImpl<>(List.of(due), PageRequest.of(0, 100), 1);
+        when(productRepository.findByStatus(eq(ProductStatusType.suspended), any(Pageable.class)))
+                .thenReturn(page);
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        ProductDto expected = ProductDto.builder().id("prod-due").status("active").build();
+        when(mapper.toDto(any(Product.class))).thenReturn(expected);
+
+        service.autoResumeExpiredPauses();
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(ProductStatusType.active);
+        assertThat(captor.getValue().getStatusHistory()).hasSize(1);
+        verify(eventPublisher).publishStateChange(expected);
+    }
+
+    @Test
+    void autoResumeExpiredPauses_noElapsedResumeDates_doesNothing() {
+        Product notDue = Product.builder()
+                .status(ProductStatusType.suspended)
+                .resumeDate(LocalDate.now().plusDays(5))
+                .build();
+        notDue.setId("prod-not-due");
+
+        Page<Product> page = new PageImpl<>(List.of(notDue), PageRequest.of(0, 100), 1);
+        when(productRepository.findByStatus(eq(ProductStatusType.suspended), any(Pageable.class)))
+                .thenReturn(page);
+
+        service.autoResumeExpiredPauses();
+
+        verify(productRepository, never()).save(any());
+        verify(eventPublisher, never()).publishStateChange(any());
     }
 
     // ── getStatusHistory ───────────────────────────────────────

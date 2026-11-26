@@ -114,9 +114,15 @@ app:
     party-management:   http://localhost:8082/tmf-api/partyManagement/v4
     customer-management: http://localhost:8083/tmf-api/customerManagement/v4
     process-flow:       http://localhost:8089/tmf-api/processFlow/v4
+    communication:       http://localhost:8088/tmf-api/communicationManagement/v4
   events:
     enabled: true
     async: true
+
+product:
+  pause:
+    min-days: 1
+    max-days: 90
 
 # ── Logging ───────────────────────────────────────────────────
 logging:

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
@@ -41,4 +42,7 @@ public class ProductStatusHistory {
 
     @Column(name = "order_ref_id", length = 36)
     private String orderRefId;
+
+    @Column(name = "resume_date")
+    private LocalDate resumeDate;
 }

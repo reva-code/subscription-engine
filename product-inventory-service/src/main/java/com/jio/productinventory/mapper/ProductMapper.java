@@ -42,6 +42,8 @@ public abstract class ProductMapper {
     @Mapping(target = "realizingResource", source = "realizingResource")
     @Mapping(target = "realizingService", source = "realizingService")
     @Mapping(target = "status", expression = "java(p.getStatus() != null ? p.getStatus().name() : null)")
+    @Mapping(target = "pauseReason", source = "pauseReason")
+    @Mapping(target = "resumeDate", source = "resumeDate")
     public abstract ProductDto toDto(Product p);
 
     public abstract List<ProductDto> toDtoList(List<Product> products);

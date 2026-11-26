@@ -1,5 +1,6 @@
 package com.jio.productinventory.service;
 
+import com.jio.productinventory.client.CommunicationClient;
 import com.jio.productinventory.dto.*;
 import com.jio.productinventory.entity.*;
 import com.jio.productinventory.events.ProductEventPublisher;
@@ -12,13 +13,17 @@ import com.jio.productinventory.util.HrefBuilder;
 import com.jio.productinventory.validation.ProductStatusMachine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +38,13 @@ public class ProductService {
     private final ProductMapper mapper;
     private final ProductEventPublisher eventPublisher;
     private final HrefBuilder hrefBuilder;
+    private final CommunicationClient communicationClient;
+
+    @Value("${product.pause.min-days:1}")
+    private int pauseMinDays;
+
+    @Value("${product.pause.max-days:90}")
+    private int pauseMaxDays;
 
     // ── CREATE ──────────────────────────────────────────────
 
@@ -191,6 +203,89 @@ public class ProductService {
         return result;
     }
 
+    // ── PAUSE / RESUME ───────────────────────────────────────
+
+    public ProductDto pauseProduct(String id, PauseProductRequestDto dto) {
+        Product product = productRepository.findByIdWithCollections(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        ProductStatusType oldStatus = product.getStatus();
+        ProductStatusMachine.validate(oldStatus, ProductStatusType.suspended);
+        validateResumeDate(dto.getResumeDate());
+
+        product.setStatus(ProductStatusType.suspended);
+        product.setPauseReason(dto.getReason());
+        product.setResumeDate(dto.getResumeDate());
+
+        appendStatusHistoryWithResume(product, oldStatus, ProductStatusType.suspended,
+                dto.getReason(), null, dto.getResumeDate());
+
+        Product saved = productRepository.save(product);
+        ProductDto result = mapper.toDto(saved);
+
+        eventPublisher.publishStateChange(result);
+        sendPauseSms(product, dto.getResumeDate());
+
+        log.info("Product paused: id={} resumeDate={}", id, dto.getResumeDate());
+        return result;
+    }
+
+    /**
+     * Scheduled job that resumes Products whose pause window has elapsed.
+     * Runs hourly by default; overridable via product.pause.auto-resume-cron.
+     */
+    @Scheduled(cron = "${product.pause.auto-resume-cron:0 0 * * * *}")
+    public void autoResumeExpiredPauses() {
+        LocalDate today = LocalDate.now();
+        int pageNumber = 0;
+        Page<Product> page;
+        do {
+            page = productRepository.findByStatus(ProductStatusType.suspended, PageRequest.of(pageNumber, 100));
+            for (Product product : page.getContent()) {
+                if (product.getResumeDate() != null && !product.getResumeDate().isAfter(today)) {
+                    ProductStatusType oldStatus = product.getStatus();
+                    product.setStatus(ProductStatusType.active);
+                    product.setPauseReason(null);
+                    product.setResumeDate(null);
+
+                    appendStatusHistoryWithResume(product, oldStatus, ProductStatusType.active,
+                            "Automatic resume after pause window elapsed", null, null);
+
+                    Product saved = productRepository.save(product);
+                    ProductDto result = mapper.toDto(saved);
+                    eventPublisher.publishStateChange(result);
+                    log.info("Product auto-resumed: id={}", saved.getId());
+                }
+            }
+            pageNumber++;
+        } while (page.hasNext());
+    }
+
+    private void validateResumeDate(LocalDate resumeDate) {
+        LocalDate today = LocalDate.now();
+        long daysOut = ChronoUnit.DAYS.between(today, resumeDate);
+        if (daysOut < pauseMinDays || daysOut > pauseMaxDays) {
+            throw new IllegalArgumentException(
+                    "resumeDate must be between " + pauseMinDays + " and " + pauseMaxDays +
+                    " days from today.");
+        }
+    }
+
+    private void sendPauseSms(Product product, LocalDate resumeDate) {
+        String customerId = product.getRelatedParty().stream()
+                .filter(rp -> "Customer".equalsIgnoreCase(rp.getRole()))
+                .map(RelatedParty::getPartyId)
+                .findFirst()
+                .orElse(null);
+        if (customerId == null) {
+            return;
+        }
+        String productLabel = product.getName() != null ? product.getName() : product.getId();
+        String messageBody = "Your product " + productLabel + " has been paused and will automatically " +
+                "resume on " + resumeDate + ".";
+        communicationClient.sendSms(customerId, null, "Product Paused", messageBody);
+    }
+
     // ── DELETE ────────────────────────────────────────────────
 
     public void deleteProduct(String id) {
@@ -304,6 +399,24 @@ public class ProductService {
                 .reason(reason)
                 .changedAt(OffsetDateTime.now())
                 .orderRefId(orderRefId)
+                .build();
+        product.getStatusHistory().add(h);
+    }
+
+    private void appendStatusHistoryWithResume(Product product,
+                                     ProductStatusType from,
+                                     ProductStatusType to,
+                                     String reason,
+                                     String orderRefId,
+                                     LocalDate resumeDate) {
+        ProductStatusHistory h = ProductStatusHistory.builder()
+                .product(product)
+                .fromStatus(from != null ? from.name() : null)
+                .toStatus(to.name())
+                .reason(reason)
+                .changedAt(OffsetDateTime.now())
+                .orderRefId(orderRefId)
+                .resumeDate(resumeDate)
                 .build();
         product.getStatusHistory().add(h);
     }

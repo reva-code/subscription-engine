@@ -353,6 +353,21 @@ class ProductRestIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    // ── Status history ─────────────────────────────────────────
+
+    @Test
+    @Order(20)
+    @DisplayName("GET /product/{id}/statusHistory — returns persisted lifecycle transitions in order")
+    void getStatusHistory_returnsAllHistoryRecords() throws Exception {
+        mockMvc.perform(get(BASE + "/product/" + createdProductId + "/statusHistory")
+                        .param("customerId", "cust-001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$[0].toStatus").value("created"))
+                .andExpect(jsonPath("$[0].changedAt").exists())
+                .andExpect(jsonPath("$[1].fromStatus").value("created"));
+    }
+
     // ── Helpers ───────────────────────────────────────────────
 
     private ProductCreateDto buildCreateRequest(String name, String status,

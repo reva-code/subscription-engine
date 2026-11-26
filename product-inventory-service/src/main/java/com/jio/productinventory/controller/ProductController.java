@@ -148,6 +148,23 @@ public class ProductController {
         return ResponseEntity.ok(productService.pauseProduct(id, dto));
     }
 
+    // ── GET /product/{id}/statusHistory ──────────────────────
+
+    @GetMapping("/product/{id}/statusHistory")
+    @Operation(summary = "Retrieves a Product's status history",
+               description = "Returns the chronological list of lifecycle status transitions for a Product. " +
+                             "Not part of the TMF637 spec; exposed for customer-facing subscription history.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Success"),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
+    public ResponseEntity<List<ProductStatusHistoryDto>> getStatusHistory(
+            @PathVariable String id,
+            @Parameter(description = "Requesting customer's party ID") @RequestParam String customerId) {
+
+        return ResponseEntity.ok(productService.getStatusHistory(id, customerId));
+    }
+
     // ── DELETE /product/{id} ─────────────────────────────────
 
     @DeleteMapping("/product/{id}")

@@ -12,6 +12,7 @@ import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -98,6 +99,44 @@ class ProductControllerTest {
 
         mockMvc.perform(delete(BASE + "/product/id-1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void getStatusHistory_returns200WithDtoList() throws Exception {
+        OffsetDateTime changedAt = OffsetDateTime.parse("2024-01-01T00:00:00Z");
+        ProductStatusHistoryDto history = ProductStatusHistoryDto.builder()
+                .fromStatus(null)
+                .toStatus("created")
+                .reason("Product created")
+                .changedAt(changedAt)
+                .build();
+
+        when(productService.getStatusHistory("id-1", "cust-001")).thenReturn(List.of(history));
+
+        mockMvc.perform(get(BASE + "/product/id-1/statusHistory").param("customerId", "cust-001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].toStatus").value("created"))
+                .andExpect(jsonPath("$[0].reason").value("Product created"));
+    }
+
+    @Test
+    void getStatusHistory_notFound_returns404() throws Exception {
+        when(productService.getStatusHistory("missing", "cust-001"))
+                .thenThrow(new ProductNotFoundException("missing"));
+
+        mockMvc.perform(get(BASE + "/product/missing/statusHistory").param("customerId", "cust-001"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("404"));
+    }
+
+    @Test
+    void getStatusHistory_notOwner_returns404() throws Exception {
+        when(productService.getStatusHistory("id-1", "cust-other"))
+                .thenThrow(new ProductNotFoundException("id-1"));
+
+        mockMvc.perform(get(BASE + "/product/id-1/statusHistory").param("customerId", "cust-other"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("404"));
     }
 
     @Test

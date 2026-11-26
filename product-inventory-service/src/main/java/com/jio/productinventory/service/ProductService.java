@@ -7,6 +7,7 @@ import com.jio.productinventory.exception.ProductNotFoundException;
 import com.jio.productinventory.mapper.ProductMapper;
 import com.jio.productinventory.repository.ProductRepository;
 import com.jio.productinventory.repository.ProductSpecification;
+import com.jio.productinventory.repository.ProductStatusHistoryRepository;
 import com.jio.productinventory.util.HrefBuilder;
 import com.jio.productinventory.validation.ProductStatusMachine;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductStatusHistoryRepository productStatusHistoryRepository;
     private final ProductMapper mapper;
     private final ProductEventPublisher eventPublisher;
     private final HrefBuilder hrefBuilder;
@@ -71,6 +73,29 @@ public class ProductService {
             dto = applyFieldProjection(dto, fields);
         }
         return dto;
+    }
+
+    // ── STATUS HISTORY ────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<ProductStatusHistoryDto> getStatusHistory(String productId, String customerId) {
+        Product product = productRepository.findByIdWithCollections(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        boolean isOwner = product.getRelatedParty().stream()
+                .anyMatch(rp -> "Customer".equals(rp.getRole()) && rp.getPartyId().equals(customerId));
+        if (!isOwner) {
+            throw new ProductNotFoundException(productId);
+        }
+
+        return productStatusHistoryRepository.findByProductIdOrderByChangedAtAsc(productId).stream()
+                .map(h -> ProductStatusHistoryDto.builder()
+                        .fromStatus(h.getFromStatus())
+                        .toStatus(h.getToStatus())
+                        .reason(h.getReason())
+                        .changedAt(h.getChangedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // ── SEARCH (list) ─────────────────────────────────────────

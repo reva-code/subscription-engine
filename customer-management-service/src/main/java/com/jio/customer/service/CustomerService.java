@@ -17,6 +17,8 @@ import java.util.Optional;
 @Transactional
 public class CustomerService {
 
+    private static final int MIDDLE_NAME_MAX_LENGTH = 30;
+
     private final CustomerRepository repository;
     private final PartyClient partyClient;
     private final CommunicationClient communicationClient;
@@ -30,6 +32,8 @@ public class CustomerService {
     }
 
     public Customer create(Customer customer) {
+        customer.setMiddleName(normalizeMiddleName(customer.getMiddleName()));
+
         // Wire 1: validate that the referenced Individual exists in TMF632 Party Management
         if (customer.getEngagedPartyId() != null && !customer.getEngagedPartyId().isBlank()) {
             if (!partyClient.individualExists(customer.getEngagedPartyId())) {
@@ -68,6 +72,10 @@ public class CustomerService {
 
     public Optional<Customer> patch(String id, Customer patch) {
         return repository.findById(id).map(existing -> {
+            // Validate before touching the managed entity, so a rejected patch changes nothing
+            String middleName = normalizeMiddleName(patch.getMiddleName());
+            // A supplied but blank middleName clears the stored value; an absent one leaves it as is
+            if (patch.getMiddleName()       != null) existing.setMiddleName(middleName);
             if (patch.getName()             != null) existing.setName(patch.getName());
             if (patch.getStatus()           != null) existing.setStatus(patch.getStatus());
             if (patch.getStatusReason()     != null) existing.setStatusReason(patch.getStatusReason());
@@ -85,5 +93,17 @@ public class CustomerService {
         if (!repository.existsById(id)) return false;
         repository.deleteById(id);
         return true;
+    }
+
+    /** Trims; blank becomes null; more than 30 characters after trim is a 400. */
+    private static String normalizeMiddleName(String middleName) {
+        if (middleName == null) return null;
+        String trimmed = middleName.trim();
+        if (trimmed.isBlank()) return null;
+        if (trimmed.length() > MIDDLE_NAME_MAX_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "middleName must be at most " + MIDDLE_NAME_MAX_LENGTH + " characters");
+        }
+        return trimmed;
     }
 }

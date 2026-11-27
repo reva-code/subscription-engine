@@ -7,8 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -68,6 +70,20 @@ class CustomerControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void createCustomer_serviceRejectsMiddleName_returns400() throws Exception {
+        Customer bad = new Customer("Saanvi Sharma", "party-001");
+        bad.setMiddleName("a".repeat(31));
+
+        when(service.create(any(Customer.class)))
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        mockMvc.perform(post(BASE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bad)))
+                .andExpect(status().isBadRequest());
+    }
+
     // ── GET (list) ────────────────────────────────────────────────────────────
 
     @Test
@@ -107,7 +123,31 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$[0].engagedPartyId").value("p-1"));
     }
 
+    @Test
+    void listCustomer_withMiddleName_exposesMiddleAndDisplayName() throws Exception {
+        Customer c = new Customer("Anna Rao", "p-1"); c.setId("c1"); c.setMiddleName("Mae");
+
+        when(service.findAll()).thenReturn(List.of(c));
+
+        mockMvc.perform(get(BASE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].middleName").value("Mae"))
+                .andExpect(jsonPath("$[0].displayName").value("Anna Mae Rao"));
+    }
+
     // ── GET /{id} ─────────────────────────────────────────────────────────────
+
+    @Test
+    void retrieveCustomer_withMiddleName_exposesMiddleAndDisplayName() throws Exception {
+        Customer c = new Customer("Anna Rao", "p-1"); c.setId("cust-001"); c.setMiddleName("Mae");
+
+        when(service.findById("cust-001")).thenReturn(Optional.of(c));
+
+        mockMvc.perform(get(BASE + "/cust-001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.middleName").value("Mae"))
+                .andExpect(jsonPath("$.displayName").value("Anna Mae Rao"));
+    }
 
     @Test
     void retrieveCustomer_found_returns200() throws Exception {
@@ -152,6 +192,19 @@ class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void patchCustomer_serviceRejectsMiddleName_returns400() throws Exception {
+        Customer patch = new Customer(); patch.setMiddleName("a".repeat(31));
+
+        when(service.patch(eq("cust-001"), any(Customer.class)))
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        mockMvc.perform(patch(BASE + "/cust-001")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(patch)))
+                .andExpect(status().isBadRequest());
     }
 
     // ── DELETE /{id} ──────────────────────────────────────────────────────────

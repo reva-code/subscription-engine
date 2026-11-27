@@ -43,6 +43,9 @@ public class Customer {
     @JsonProperty("name")
     private String name;
 
+    @JsonProperty("middleName")
+    private @Nullable String middleName;
+
     /**
      * Lifecycle status: active | inactive | prospect | former
      * Defaults to "prospect" on creation.
@@ -118,6 +121,25 @@ public class Customer {
 
     public String getName()                   { return name; }
     public void setName(String name)          { this.name = name; }
+
+    public String getMiddleName()                     { return middleName; }
+    public void setMiddleName(String middleName)      { this.middleName = middleName; }
+
+    /**
+     * Computed, never stored. Without a middle name this is exactly {@code name};
+     * otherwise the middle name is placed before the last word of the name
+     * (after it, if the name is a single word).
+     */
+    @Transient
+    @JsonProperty(value = "displayName", access = JsonProperty.Access.READ_ONLY)
+    public String getDisplayName() {
+        if (middleName == null || middleName.isBlank()) return name;
+        String trimmedName = name == null ? "" : name.trim();
+        if (trimmedName.isEmpty()) return middleName.trim();
+        List<String> parts = new ArrayList<>(List.of(trimmedName.split("\\s+")));
+        parts.add(parts.size() > 1 ? parts.size() - 1 : 1, middleName.trim());
+        return String.join(" ", parts);
+    }
 
     public String getStatus()                 { return status; }
     public void setStatus(String status)      { this.status = status; }
